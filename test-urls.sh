@@ -18,12 +18,12 @@
 #   bash testUrls.sh mylist.txt > report.log
 
 # @TODO
-#  - If wget encounters a permanent redirect, it returns '302 200'. Need to extract only the last hit or reattempt with curl...
 #  - Unencoded spaces in URLs can throw false positives, like 'parksaustralia.gv.au/ kakadu' as 
 #    everything after the space is treated as a second argument
 
 
 SITE='https://parksaustralia.gov.au'
+INPUT=$1
 RESULTS=$1'-live.csv'
 
 # Empty results if the file already exists
@@ -51,10 +51,18 @@ else
         
         # So let's use wget's spider mode, which only retrieves the response header in a fraction of the time
         RESPONSE=$(wget -Sq --no-check-certificate --spider $FULLPATH 2>&1 | egrep 'HTTP/1.1 ' | cut -d ' ' -f 4)
-        # https://stackoverflow.com/questions/20553166/shell-syntax-error-in-expression-error-token-is-0#20553239
-        if [[ $RESPONSE != 40* ]] && [[ ! $RESPONSE -eq '' ]]; then
-            echo -e $FULLPATH','$RESPONSE >> $RESULTS
+        
+        # If the response isn't a 400/500 error, or empty...
+        if [[ $(echo $RESPONSE) != 40* ]] && [[ $(echo $RESPONSE) != 50* ]] && [[ $(echo $RESPONSE) != '' ]]; then
+        
+            # Check if it's more than 3 numbers long - redirects return both codes e.g. '302 200'
+            if [[ $(echo $RESPONSE | wc -m) -gt 3 ]]; then
+                FINAL_RESPONSE=$(echo $RESPONSE | cut -d ' ' -f 2)
+            else 
+                FINAL_RESPONSE=$RESPONSE
+            fi
+            echo -e $FULLPATH','$FINAL_RESPONSE >> $RESULTS
         fi
-    done < $1
+    done < $INPUT
 fi
 echo 'URLs tested, live URLs logged in '$RESULTS
