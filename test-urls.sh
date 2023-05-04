@@ -1,30 +1,30 @@
 #!/bin/sh
 
-# Test the HTTP response code of all absolute paths in a given list
+# Test the HTTP response code of all absolute paths in a given list. Works for webpages, files etc. 
 # Specify your parent domain in the $SITE variable below
 # 
 # Usage: 
 # 
-#   bash testUrls.sh mylist.txt
+#   bash testUrls.sh myUrlsList.txt
 # 
-# mylist.txt contents (assumes absolute URLs only): 
+# myUrslList.txt contents (currently accepts absolute URLs only):
 # 
 #   /some/path/
 #   /another/path
 #   etc
 # 
-# You can optionally save the results like this; 
-# 
-#   bash testUrls.sh mylist.txt > report.log
+# Results will be logged in myUrlsList-results.csv in this format:
+# /some/page,200
+# /my/best/file.pdf,302 etc
 
 # @TODO
-#  - Unencoded spaces in URLs can throw false positives, like 'parksaustralia.gv.au/ kakadu' as 
-#    everything after the space is treated as a second argument
+#  - Unencoded spaces in URLs can throw false positives, like 'example.com/ some/path' as
+#    everything after the space is treated as a second argument in the shell
 
 
-SITE='https://parksaustralia.gov.au'
+SITE='https://example.com'
 INPUT=$1
-RESULTS=$1'-live.csv'
+RESULTS=$1'-results.csv'
 
 # Empty results if the file already exists
 if [[ -f $RESULTS ]]; then
@@ -51,6 +51,10 @@ else
         
         # So let's use wget's spider mode, which only retrieves the response header in a fraction of the time
         RESPONSE=$(wget -Sq --no-check-certificate --spider $FULLPATH 2>&1 | egrep 'HTTP/1.1 ' | cut -d ' ' -f 4)
+        
+
+        # If the response isn't a 200 code (catches everything)
+        # if [[ $(echo $RESPONSE) != '' ]] && [[ $(echo $RESPONSE) != 200 ]]; then
         
         # If the response isn't a 400/500 error, or empty...
         if [[ $(echo $RESPONSE) != 40* ]] && [[ $(echo $RESPONSE) != 50* ]] && [[ $(echo $RESPONSE) != '' ]]; then
