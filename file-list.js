@@ -1,6 +1,7 @@
 // JavaScript to grab lists of commonly-tested URLs
 
-// Get absolute files URLs from `/admin/content/files`, run this function in the console
+// Get absolute files URLs from `/admin/content/files`, run this function in the console.
+// To get a list of ALL files, set the View to show all entries (may cause performance issues with > 5000 files)
 function getDrupalFiles() {
   let list = [];
   jQuery('tbody .views-field-filename a').each(function() {
